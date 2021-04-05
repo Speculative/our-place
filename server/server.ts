@@ -17,21 +17,50 @@ router.get("/static/:path", async (ctx) => {
   });
 });
 
-const sockets: WebSocket[] = [];
+const sockets: { [id: string]: WebSocket } = {};
+const positions: { [id: string]: { x: number; y: number } } = {};
+let currentId = 0;
 
 router.get("/socket", async (ctx) => {
-  logger.info("Socket opened");
   const socket = await ctx.upgrade();
-  sockets.push(socket);
-  socket.send("Hi");
+  const id = `${currentId++}`;
+  logger.info(`#${id} connected`);
+  sockets[id] = socket;
+  positions[id] = { x: 0, y: 0 };
+
+  // Send initial position reports
+  Object.entries(positions)
+    .filter(([roommateId]) => roommateId !== id)
+    .forEach(([roommateId, { x, y }]) =>
+      socket.send(JSON.stringify({ type: "position", roommateId, x, y }))
+    );
+
   for await (const event of socket) {
     if (typeof event === "string") {
-      // const parsed = JSON.parse(event);
-      // logger.info(parsed);
-      logger.info(event);
-      sockets.forEach((socket) => socket.send(event));
+      const parsed = JSON.parse(event);
+      const { x, y } = parsed;
+      positions[id] = { x, y };
+      Object.entries(sockets)
+        .filter(([socketId]) => socketId !== id)
+        .forEach(([, s]) =>
+          s.send(
+            JSON.stringify({
+              type: "position",
+              roommateId: id,
+              x,
+              y,
+            })
+          )
+        );
     }
   }
+
+  logger.info(`#${id} disconnected`);
+  delete sockets[id];
+  delete positions[id];
+  Object.values(sockets).forEach((s) =>
+    s.send(JSON.stringify({ type: "leave", roommateId: id }))
+  );
 });
 
 app.use(router.routes());

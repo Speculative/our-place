@@ -1,0 +1,9 @@
+.fpsCounter {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: yellow;
+  font-family: sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+}
