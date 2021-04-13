@@ -21,9 +21,15 @@ export const usePosition = create(
     {
       x: 0,
       y: 0,
+      mouseX: 0,
+      mouseY: 0,
     },
     (set) => ({
       move: (x: number, y: number) => set({ x, y }),
+      moveMouse: bindDispatch(set, (state, mouseX: number, mouseY: number) => {
+        state.mouseX = mouseX;
+        state.mouseY = mouseY;
+      }),
     })
   )
 );
@@ -31,13 +37,26 @@ export const usePosition = create(
 export const useRoommatePositions = create(
   combine(
     { positions: {} } as {
-      positions: { [roommateId: string]: { x: number; y: number } };
+      positions: {
+        [roommateId: string]: {
+          x: number;
+          y: number;
+          mouseX: number;
+          mouseY: number;
+        };
+      };
     },
     (set) => ({
       roommateMove: bindDispatch(
         set,
-        (state, roommateId: string, x: number, y: number) =>
-          (state.positions[roommateId] = { x, y })
+        (
+          state,
+          roommateId: string,
+          x: number,
+          y: number,
+          mouseX: number,
+          mouseY: number
+        ) => (state.positions[roommateId] = { x, y, mouseX, mouseY })
       ),
       roommateLeave: bindDispatch(set, (state, roommateId: string) => {
         delete state.positions[roommateId];
@@ -45,6 +64,3 @@ export const useRoommatePositions = create(
     })
   )
 );
-
-(window as any).usePosition = usePosition;
-(window as any).useRoommatePositions = useRoommatePositions;

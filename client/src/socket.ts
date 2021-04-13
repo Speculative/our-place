@@ -5,6 +5,8 @@ interface PositionReport {
   roommateId: string;
   x: number;
   y: number;
+  mouseX: number;
+  mouseY: number;
 }
 
 interface LeaveReport {
@@ -20,7 +22,14 @@ export function setupSocket() {
 
   socket.addEventListener("open", () => {
     const currentPosition = usePosition.getState();
-    socket.send(JSON.stringify({ x: currentPosition.x, y: currentPosition.y }));
+    socket.send(
+      JSON.stringify({
+        x: currentPosition.x,
+        y: currentPosition.y,
+        mouseX: currentPosition.mouseX,
+        mouseY: currentPosition.mouseY,
+      })
+    );
   });
 
   socket.addEventListener("message", (message) => {
@@ -28,11 +37,19 @@ export function setupSocket() {
     if (report.type === "position") {
       useRoommatePositions
         .getState()
-        .roommateMove(report.roommateId, report.x, report.y);
+        .roommateMove(
+          report.roommateId,
+          report.x,
+          report.y,
+          report.mouseX,
+          report.mouseY
+        );
     } else if (report.type === "leave") {
       useRoommatePositions.getState().roommateLeave(report.roommateId);
     }
   });
 
-  usePosition.subscribe(({ x, y }) => socket.send(JSON.stringify({ x, y })));
+  usePosition.subscribe(({ x, y, mouseX, mouseY }) =>
+    socket.send(JSON.stringify({ x, y, mouseX, mouseY }))
+  );
 }

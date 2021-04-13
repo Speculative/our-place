@@ -18,7 +18,9 @@ router.get("/static/:path", async (ctx) => {
 });
 
 const sockets: { [id: string]: WebSocket } = {};
-const positions: { [id: string]: { x: number; y: number } } = {};
+const positions: {
+  [id: string]: { x: number; y: number; mouseX: number; mouseY: number };
+} = {};
 let currentId = 0;
 
 router.get("/socket", async (ctx) => {
@@ -26,20 +28,22 @@ router.get("/socket", async (ctx) => {
   const id = `${currentId++}`;
   logger.info(`#${id} connected`);
   sockets[id] = socket;
-  positions[id] = { x: 0, y: 0 };
+  positions[id] = { x: 0, y: 0, mouseX: 0, mouseY: 0 };
 
   // Send initial position reports
   Object.entries(positions)
     .filter(([roommateId]) => roommateId !== id)
-    .forEach(([roommateId, { x, y }]) =>
-      socket.send(JSON.stringify({ type: "position", roommateId, x, y }))
+    .forEach(([roommateId, { x, y, mouseX, mouseY }]) =>
+      socket.send(
+        JSON.stringify({ type: "position", roommateId, x, y, mouseX, mouseY })
+      )
     );
 
   for await (const event of socket) {
     if (typeof event === "string") {
       const parsed = JSON.parse(event);
-      const { x, y } = parsed;
-      positions[id] = { x, y };
+      const { x, y, mouseX, mouseY } = parsed;
+      positions[id] = { x, y, mouseX, mouseY };
       Object.entries(sockets)
         .filter(([socketId]) => socketId !== id)
         .forEach(([, s]) =>
@@ -49,6 +53,8 @@ router.get("/socket", async (ctx) => {
               roommateId: id,
               x,
               y,
+              mouseX,
+              mouseY,
             })
           )
         );
