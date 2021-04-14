@@ -74,3 +74,15 @@ export const useRoommatePositions = create(
     })
   )
 );
+
+export const useRoom = create(
+  combine(
+    {
+      width: 2000,
+      height: 2000,
+    },
+    (set) => ({
+      setDimensions: (width: number, height: number) => set({ width, height }),
+    })
+  )
+);
