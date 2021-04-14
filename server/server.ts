@@ -17,6 +17,46 @@ router.get("/static/:path", async (ctx) => {
   });
 });
 
+interface PositionReport {
+  type: "position";
+  x: number;
+  y: number;
+  mouseX: number;
+  mouseY: number;
+}
+
+interface HandshakeReport {
+  type: "handshake";
+  selfId: string;
+}
+
+interface JoinReport {
+  type: "join";
+  x: number;
+  y: number;
+  mouseX: number;
+  mouseY: number;
+}
+
+interface LeaveReport {
+  type: "leave";
+}
+
+interface RTCOfferReport {
+  type: "rtcOffer";
+  toRoommateId: string;
+  offer: any;
+}
+
+type ReportContract =
+  | HandshakeReport
+  | JoinReport
+  | PositionReport
+  | LeaveReport
+  | RTCOfferReport;
+
+type RoomReport = { fromRoommateId: string } & ReportContract;
+
 const sockets: { [id: string]: WebSocket } = {};
 const positions: {
   [id: string]: { x: number; y: number; mouseX: number; mouseY: number };
@@ -25,11 +65,12 @@ let currentId = 0;
 
 router.get("/socket", async (ctx) => {
   const socket = await ctx.upgrade();
-  const id = `${currentId++}`;
+  const id = `Roommate-${currentId++}`;
   logger.info(`#${id} connected`);
   sockets[id] = socket;
   positions[id] = { x: 0, y: 0, mouseX: 0, mouseY: 0 };
 
+  socket.send(JSON.stringify({ type: "handshake", selfId: id }));
   // Send initial position reports
   Object.entries(positions)
     .filter(([roommateId]) => roommateId !== id)
@@ -41,23 +82,17 @@ router.get("/socket", async (ctx) => {
 
   for await (const event of socket) {
     if (typeof event === "string") {
-      const parsed = JSON.parse(event);
-      const { x, y, mouseX, mouseY } = parsed;
-      positions[id] = { x, y, mouseX, mouseY };
+      const parsed: RoomReport = JSON.parse(event);
+      const { type, fromRoommateId } = parsed;
+      if (type === "position" || type === "join") {
+        const { x, y, mouseX, mouseY } = parsed as PositionReport | JoinReport;
+        positions[fromRoommateId] = { x, y, mouseX, mouseY };
+      }
+
+      // Re-broadcast to everone else in the room
       Object.entries(sockets)
         .filter(([socketId]) => socketId !== id)
-        .forEach(([, s]) =>
-          s.send(
-            JSON.stringify({
-              type: "position",
-              roommateId: id,
-              x,
-              y,
-              mouseX,
-              mouseY,
-            })
-          )
-        );
+        .forEach(([, s]) => s.send(event));
     }
   }
 
@@ -65,7 +100,7 @@ router.get("/socket", async (ctx) => {
   delete sockets[id];
   delete positions[id];
   Object.values(sockets).forEach((s) =>
-    s.send(JSON.stringify({ type: "leave", roommateId: id }))
+    s.send(JSON.stringify({ type: "leave", fromRoommateId: id }))
   );
 });
 

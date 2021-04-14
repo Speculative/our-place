@@ -16,6 +16,16 @@ function bindDispatch<TState extends State, TProducerArgs extends any[]>(
   };
 }
 
+export const useSelf = create(
+  combine({ selfId: undefined } as { selfId?: string }, (set) => ({
+    becomeSelf: (selfId: string) => set({ selfId }),
+    loseSelf: () =>
+      bindDispatch(set, (state) => {
+        state.selfId = undefined;
+      }),
+  }))
+);
+
 export const usePosition = create(
   combine(
     {
