@@ -1,10 +1,10 @@
-interface GridProps {
-  width: number;
-  height: number;
-  spacing: number;
-}
+import { observer } from "mobx-react-lite";
+import { room } from "./store";
 
-export function Grid({ width, height, spacing }: GridProps) {
+const spacing = 80;
+
+export const Grid = observer(() => {
+  const { width, height } = room;
   return (
     <g>
       {Array.from({ length: Math.ceil(width / spacing) + 1 }, (_, i) => i).map(
@@ -33,4 +33,4 @@ export function Grid({ width, height, spacing }: GridProps) {
       )}
     </g>
   );
-}
+});

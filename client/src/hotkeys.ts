@@ -1,5 +1,4 @@
-import { unstable_batchedUpdates } from "react-dom";
-import { usePosition } from "./store";
+import { selfPosition } from "./store";
 
 const SPEED = 0.4;
 
@@ -24,7 +23,7 @@ const HOTKEYS = {
   a: Direction.West,
 };
 
-let lastMoveTimestamp: DOMHighResTimeStamp | undefined = undefined;
+let lastMoveTimestamp: number | undefined = undefined;
 let moving: Direction[] = [];
 
 function startMove(direction: Direction) {
@@ -44,7 +43,7 @@ function endMove(direction: Direction) {
   }
 }
 
-function moveTick(ts: DOMHighResTimeStamp) {
+function moveTick(ts: number) {
   if (lastMoveTimestamp === undefined) {
     lastMoveTimestamp = ts;
     requestAnimationFrame(moveTick);
@@ -54,7 +53,7 @@ function moveTick(ts: DOMHighResTimeStamp) {
       return;
     }
 
-    const { x, y, move } = usePosition.getState();
+    const { x, y } = selfPosition;
     const [px, py] = moving
       .map((direction) => MOVES[direction])
       .reduce(([sx, sy], [px, py]) => [sx + px, sy + py], [0, 0]);
@@ -64,7 +63,7 @@ function moveTick(ts: DOMHighResTimeStamp) {
     const dx = (px * dt * SPEED) / scale;
     const dy = (py * dt * SPEED) / scale;
 
-    unstable_batchedUpdates(() => move(x + dx, y + dy));
+    selfPosition.move(x + dx, y + dy);
     lastMoveTimestamp = ts;
     requestAnimationFrame(moveTick);
   }

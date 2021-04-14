@@ -9,6 +9,14 @@ const peers: {
   };
 } = {};
 
+const RTC_CONFIG = {
+  iceServers: [
+    {
+      urls: "stun:stun.l.google.com",
+    },
+  ],
+};
+
 export async function initiatePeerConnection(roommateId: string) {
   if (roommateId in peers) {
     return;
@@ -17,13 +25,7 @@ export async function initiatePeerConnection(roommateId: string) {
   const instance = new Peer({
     initiator: true,
     stream: await getAudioStream(),
-    config: {
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com",
-        },
-      ],
-    },
+    config: RTC_CONFIG,
   });
   peers[roommateId] = { instance: instance };
 
@@ -42,7 +44,10 @@ export async function receivePeerSignal(
   offer: Peer.SignalData
 ) {
   if (!(roommateId in peers)) {
-    const instance = new Peer({ stream: await getAudioStream() });
+    const instance = new Peer({
+      stream: await getAudioStream(),
+      config: RTC_CONFIG,
+    });
     peers[roommateId] = { instance };
   }
 

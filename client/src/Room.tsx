@@ -1,48 +1,51 @@
 import { useEffect } from "react";
-import { usePosition, useRoommatePositions, useRoom } from "./store";
+import { observer } from "mobx-react-lite";
+
+import { selfPosition, roommatePositions, camera, worldMouse } from "./store";
 import { registerHotkeys } from "./hotkeys";
 import { registerMousePosition } from "./mouse";
 import { setupSocket } from "./socket";
+import { registerWindowSize } from "./window";
 import { Roommate } from "./Roommate";
 import { Grid } from "./Grid";
-import { useCamera } from "./useCamera";
 // import { getAudioStream } from "./mediaCapture";
 
 import "./index.css";
 
-export function Room() {
+export const Room = observer(() => {
   useEffect(() => {
+    registerWindowSize();
     registerHotkeys();
     registerMousePosition();
     setupSocket();
     // getAudioStream();
   }, []);
-
-  const { x, y, mouseX, mouseY } = usePosition((state) => ({
-    x: state.x,
-    y: state.y,
-    mouseX: state.mouseX,
-    mouseY: state.mouseY,
-  }));
-  const roommatePositions = useRoommatePositions((state) => state.positions);
-  const { roomWidth, roomHeight } = useRoom((state) => ({
-    roomWidth: state.width,
-    roomHeight: state.height,
-  }));
-  const { cameraMinX, cameraMinY, cameraWidth, cameraHeight } = useCamera();
+  const { cameraMinX, cameraMinY, cameraWidth, cameraHeight } = camera.get();
+  const { mouseX, mouseY } = worldMouse.get();
 
   return (
     <svg
       viewBox={`${cameraMinX} ${cameraMinY} ${cameraWidth} ${cameraHeight}`}
       className="rootSvg"
     >
-      <Grid width={roomWidth} height={roomHeight} spacing={80} />
-      {Object.entries(roommatePositions).map(
-        ([id, { x, y, mouseX, mouseY }]) => (
-          <Roommate x={x} y={y} mouseX={mouseX} mouseY={mouseY} key={id} />
+      <Grid />
+      {Array.from(roommatePositions.positions.entries()).map(
+        ([id, { pos, mouse }]) => (
+          <Roommate
+            x={pos.x}
+            y={pos.y}
+            mouseX={mouse.x}
+            mouseY={mouse.y}
+            key={id}
+          />
         )
       )}
-      <Roommate x={x} y={y} mouseX={mouseX} mouseY={mouseY} />
+      <Roommate
+        x={selfPosition.x}
+        y={selfPosition.y}
+        mouseX={mouseX}
+        mouseY={mouseY}
+      />
     </svg>
   );
-}
+});

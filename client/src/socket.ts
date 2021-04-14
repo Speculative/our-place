@@ -1,6 +1,8 @@
-import { usePosition, useRoommatePositions, useSelf } from "./store";
-import { initiatePeerConnection, receivePeerSignal } from "./rtc";
+import { autorun } from "mobx";
 import type Peer from "simple-peer";
+
+import { selfPosition, viewportMouse, roommatePositions, self } from "./store";
+import { initiatePeerConnection, receivePeerSignal } from "./rtc";
 
 interface PositionReport {
   type: "position";
@@ -55,59 +57,51 @@ export function setupSocket() {
   pendingSocket.addEventListener("message", (message) => {
     const report: RoomReport = JSON.parse(message.data);
     if (report.type === "handshake") {
-      useSelf.getState().becomeSelf(report.selfId);
+      self.becomeSelf(report.selfId);
 
       // Send an initial position to everyone in the room
-      const currentPosition = usePosition.getState();
       safeSend({
         type: "join",
-        x: currentPosition.x,
-        y: currentPosition.y,
-        mouseX: currentPosition.mouseX,
-        mouseY: currentPosition.mouseY,
+        x: selfPosition.x,
+        y: selfPosition.y,
+        mouseX: viewportMouse.viewportX,
+        mouseY: viewportMouse.viewportY,
       });
     } else if (report.type === "join") {
       console.log(report.fromRoommateId, "joined");
       initiatePeerConnection(report.fromRoommateId);
 
-      useRoommatePositions
-        .getState()
-        .roommateMove(
-          report.fromRoommateId,
-          report.x,
-          report.y,
-          report.mouseX,
-          report.mouseY
-        );
+      roommatePositions.roommateMove(
+        report.fromRoommateId,
+        report.x,
+        report.y,
+        report.mouseX,
+        report.mouseY
+      );
     } else if (report.type === "position") {
-      useRoommatePositions
-        .getState()
-        .roommateMove(
-          report.fromRoommateId,
-          report.x,
-          report.y,
-          report.mouseX,
-          report.mouseY
-        );
+      roommatePositions.roommateMove(
+        report.fromRoommateId,
+        report.x,
+        report.y,
+        report.mouseX,
+        report.mouseY
+      );
     } else if (report.type === "leave") {
       console.log(report.fromRoommateId, "left");
-      useRoommatePositions.getState().roommateLeave(report.fromRoommateId);
+      roommatePositions.roommateLeave(report.fromRoommateId);
     } else if (report.type === "rtcOffer") {
       receivePeerSignal(report.fromRoommateId, report.offer);
     }
   });
 
-  usePosition.subscribe(({ x, y, mouseX, mouseY }) => {
-    const selfId = useSelf.getState().selfId;
-    if (selfId !== undefined) {
-      safeSend({
-        type: "position",
-        x,
-        y,
-        mouseX,
-        mouseY,
-      });
-    }
+  autorun(() => {
+    safeSend({
+      type: "position",
+      x: selfPosition.x,
+      y: selfPosition.y,
+      mouseX: viewportMouse.viewportX,
+      mouseY: viewportMouse.viewportY,
+    });
   });
 }
 
@@ -120,8 +114,7 @@ export function sendRtcOffer(toRoommateId: string, offer: Peer.SignalData) {
 }
 
 function safeSend(message: ReportContract) {
-  const selfId = useSelf.getState().selfId;
-  if (socket !== undefined && selfId !== undefined) {
-    socket.send(JSON.stringify({ ...message, fromRoommateId: selfId }));
+  if (socket !== undefined && self.selfId !== undefined) {
+    socket.send(JSON.stringify({ ...message, fromRoommateId: self.selfId }));
   }
 }
