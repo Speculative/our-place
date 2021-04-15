@@ -8,7 +8,7 @@ import { setupSocket } from "./socket";
 import { registerWindowSize } from "./window";
 import { Roommate } from "./Roommate";
 import { Grid } from "./Grid";
-// import { getAudioStream } from "./mediaCapture";
+import { getAudioStream } from "./mediaCapture";
 
 import "./index.css";
 
@@ -18,7 +18,7 @@ export const Room = observer(() => {
     registerHotkeys();
     registerMousePosition();
     setupSocket();
-    // getAudioStream();
+    getAudioStream();
   }, []);
   const { cameraMinX, cameraMinY, cameraWidth, cameraHeight } = camera.get();
   const { mouseX, mouseY } = worldMouse.get();
