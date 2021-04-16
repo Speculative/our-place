@@ -1,8 +1,5 @@
 import { logger } from "./logger.ts";
-import type {
-  WebSocket,
-  WebSocketEvent,
-} from "https://deno.land/std@0.91.0/ws/mod.ts";
+import type { WebSocket } from "https://deno.land/std@0.91.0/ws/mod.ts";
 
 // It's a bit weird to reach into the client folder for this, but CRA doesn't
 // like importing from outside of the client/src directory. Meanwhile, deno is
@@ -43,8 +40,9 @@ function checkAlive(roommateId: string) {
   if (!roommates[roommateId].alive) {
     logger.info(`${roommateId} timed out`);
     cleanupRoommate(roommateId);
+  } else {
+    roommates[roommateId].alive = false;
   }
-  roommates[roommateId].alive = false;
 }
 
 function initializeRoommate(socket: WebSocket) {
@@ -61,13 +59,13 @@ function initializeRoommate(socket: WebSocket) {
   return id;
 }
 
-async function cleanupRoommate(roommateId: string) {
+function cleanupRoommate(roommateId: string) {
   const roommate = roommates[roommateId];
   if (roommate !== undefined) {
     clearInterval(roommate.heartbeatInterval);
 
     try {
-      await roommate.socket.close();
+      roommate.socket.closeForce();
     } catch {
       // This will usually be due to double-closing
     }
@@ -114,30 +112,34 @@ function handleMessage(message: string, roommateId: string) {
 }
 
 export async function configureSocket(socket: WebSocket) {
-  const id = initializeRoommate(socket);
+  try {
+    const id = initializeRoommate(socket);
 
-  logger.info(`${id} connected`);
-  logger.info(`Currently online: ${Object.keys(roommates)}`);
+    logger.info(`${id} connected`);
+    logger.info(`Currently online: ${Object.keys(roommates)}`);
 
-  // Send initial position reports to the one who just joined
-  Object.entries(roommates)
-    .filter(([roommateId]) => roommateId !== id)
-    .forEach(([roommateId, { position }]) =>
-      safeSend(socket, {
-        type: "position",
-        fromRoommateId: roommateId,
-        ...position,
-      })
-    );
+    // Send initial position reports to the one who just joined
+    Object.entries(roommates)
+      .filter(([roommateId]) => roommateId !== id)
+      .forEach(([roommateId, { position }]) =>
+        safeSend(socket, {
+          type: "position",
+          fromRoommateId: roommateId,
+          ...position,
+        })
+      );
 
-  // We're intentinoally awaiting here, blocking the request from closing
-  for await (const event of socket) {
-    if (typeof event === "string") {
-      await handleMessage(event, id);
+    // We're intentinoally awaiting here, blocking the request from closing
+    for await (const event of socket) {
+      if (typeof event === "string") {
+        await handleMessage(event, id);
+      }
     }
-  }
 
-  await cleanupRoommate(id);
-  broadcast({ type: "leave", fromRoommateId: id }, id);
-  logger.info(`#${id} disconnected`);
+    cleanupRoommate(id);
+    broadcast({ type: "leave", fromRoommateId: id }, id);
+    logger.info(`#${id} disconnected`);
+  } catch (e) {
+    logger.warn("Error handling socket", e);
+  }
 }

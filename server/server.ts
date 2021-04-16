@@ -8,8 +8,12 @@ const router = new Router();
 // Socket
 router.get("/socket", async (ctx) => {
   logger.info("[Routing] Socket");
-  const socket = await ctx.upgrade();
-  await configureSocket(socket);
+  try {
+    const socket = await ctx.upgrade();
+    configureSocket(socket);
+  } catch (e) {
+    console.warn("Error handling websocket", e);
+  }
 });
 
 app.use(router.routes());
