@@ -1,0 +1,25 @@
+.hudRoot {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+}
+
+.customizers {
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.customizer {
+  display: flex;
+  flex-direction: row;
+}
+
+.currentOption {
+  display: inline-flex;
+  justify-content: center;
+  width: 5rem;
+}

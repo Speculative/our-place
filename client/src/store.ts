@@ -155,3 +155,31 @@ export const worldMouse = computed(() => {
     mouseY: cameraMinY + viewportMouse.viewportY,
   };
 });
+
+export enum Hats {
+  Nothing = "Nothing",
+  Tangie = "Tangie",
+  Ears = "Ears",
+}
+export enum Mouths {
+  Circle = "Circle",
+  Fuji = "Fuji",
+}
+
+const Dress = types
+  .model({
+    hat: types.enumeration<Hats>(Object.values(Hats)),
+    mouth: types.enumeration<Mouths>(Object.values(Mouths)),
+  })
+  .actions((state) => ({
+    changeHat(hat: typeof state.hat) {
+      state.hat = hat;
+    },
+    changeMouth(mouth: typeof state.mouth) {
+      state.mouth = mouth;
+    },
+  }));
+export const selfDress = Dress.create({
+  hat: Hats.Nothing,
+  mouth: Mouths.Fuji,
+});

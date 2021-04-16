@@ -23,5 +23,6 @@ export const useAnimationFrame = (
         cancelAnimationFrame(requestRef.current);
       }
     };
+    // eslint-disable-next-line
   }, []);
 };

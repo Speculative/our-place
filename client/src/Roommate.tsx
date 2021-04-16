@@ -1,4 +1,5 @@
 import { useSpring, animated } from "react-spring";
+import { Hats, Mouths } from "./store";
 
 interface RoommateProps {
   x: number;
@@ -6,7 +7,8 @@ interface RoommateProps {
   mouseX: number;
   mouseY: number;
   loudness: number;
-  mouth: "circle" | "fuji";
+  mouth: Mouths;
+  hat: Hats;
 }
 
 export function Roommate({
@@ -16,6 +18,7 @@ export function Roommate({
   mouseY,
   loudness,
   mouth,
+  hat,
 }: RoommateProps) {
   const dx = (mouseX ?? x) - x;
   const dy = (mouseY ?? y) - y;
@@ -43,16 +46,15 @@ export function Roommate({
     cxy: [fx, fy],
     config: { mass: 1, tension: 500, friction: 10, clamp: true },
   });
+  const [cx, cy] = cxy.get();
 
   return (
-    <g viewBox="0 0 20 20" transform={`translate(${x}, ${y})`}>
+    <g transform={`translate(${x}, ${y})`}>
       <circle r={20} fill="white" />
-      <animated.g
-        transform={cxy.to((cx, cy) => `translate(${cx - 4} ${cy - 2})`)}
-      >
+      <animated.g transform={`translate(${cx - 4} ${cy - 2})`}>
         <circle cx={0} cy={0} r={2} fill="black" />
         <circle cx={12} cy={0} r={2} fill="black" />
-        {mouth === "fuji" ? (
+        {mouth === Mouths.Fuji ? (
           <polygon
             transform="translate(6 8)"
             points={points.map(([px, py]) => `${px},${py}`).join(" ")}
@@ -62,6 +64,11 @@ export function Roommate({
           <circle cx={6} cy={8} r={4 * scaledLoudness} fill="black" />
         )}
       </animated.g>
+      {hat === Hats.Tangie ? (
+        <image x={-10} y={-30} href="/tangie.png" width={20} />
+      ) : hat === Hats.Ears ? (
+        <image x={-20} y={-25} href="/ears.png" width={40} />
+      ) : null}
     </g>
   );
 }

@@ -1,12 +1,13 @@
 import { Room } from "./Room";
-import { FPSCounter } from "./FPSCounter";
+import { HUD } from "./HUD";
+
 import "./index.css";
 
 function App() {
   return (
     <div className="rootStyles">
       <Room />
-      <FPSCounter />
+      <HUD />
     </div>
   );
 }

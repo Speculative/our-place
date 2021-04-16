@@ -7,14 +7,19 @@ import {
   camera,
   worldMouse,
   selfAudio,
+  selfDress,
+  Hats,
+  Mouths,
 } from "./store";
+
 import { registerHotkeys } from "./hotkeys";
 import { registerMousePosition } from "./mouse";
 import { setupSocket } from "./socket";
 import { registerWindowSize } from "./window";
+import { registerSelfAudio } from "./mediaCapture";
+
 import { Roommate } from "./Roommate";
 import { Grid } from "./Grid";
-import { registerSelfAudio } from "./mediaCapture";
 
 import "./index.css";
 
@@ -43,7 +48,8 @@ export const Room = observer(() => {
             mouseX={mouse.x}
             mouseY={mouse.y}
             loudness={audio.loudness}
-            mouth="fuji"
+            mouth={Mouths.Fuji}
+            hat={Hats.Tangie}
             key={id}
           />
         )
@@ -53,7 +59,8 @@ export const Room = observer(() => {
         y={selfPosition.y}
         mouseX={mouseX}
         mouseY={mouseY}
-        mouth="circle"
+        mouth={selfDress.mouth}
+        hat={selfDress.hat}
         loudness={selfAudio.loudness}
       />
     </svg>
