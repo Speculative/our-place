@@ -41,14 +41,27 @@ const ViewportPosition = types
   }));
 export const viewportMouse = ViewportPosition.create();
 
-const RoommatePosition = types.model({
+const AudioProperties = types
+  .model({
+    loudness: 0,
+  })
+  .actions((state) => ({
+    setLoudness(loudness: number) {
+      state.loudness = loudness;
+    },
+  }));
+
+export const selfAudio = AudioProperties.create();
+
+const RoommateStatus = types.model({
   pos: Position,
   mouse: Position,
+  audio: AudioProperties,
 });
 
-const RoommatePositions = types
+const RoommateStatuses = types
   .model({
-    positions: types.map(RoommatePosition),
+    statuses: types.map(RoommateStatus),
   })
   .actions((state) => ({
     roommateMove(
@@ -58,16 +71,35 @@ const RoommatePositions = types
       mouseX: number,
       mouseY: number
     ) {
-      state.positions.set(roommateId, {
-        pos: { x, y },
-        mouse: { x: mouseX, y: mouseY },
-      });
+      if (!state.statuses.has(roommateId)) {
+        state.statuses.set(roommateId, {
+          pos: Position.create(),
+          mouse: Position.create(),
+          audio: AudioProperties.create(),
+        });
+      }
+
+      const roommateStatus = state.statuses.get(roommateId)!;
+      roommateStatus.pos.move(x, y);
+      roommateStatus.mouse.move(mouseX, mouseY);
+    },
+    roommateSpeak(roommateId: string, loudness: number) {
+      if (!state.statuses.has(roommateId)) {
+        state.statuses.set(roommateId, {
+          pos: Position.create(),
+          mouse: Position.create(),
+          audio: AudioProperties.create(),
+        });
+      }
+
+      const roommateStatus = state.statuses.get(roommateId)!;
+      roommateStatus.audio.setLoudness(loudness);
     },
     roommateLeave(roommateId: string) {
-      state.positions.delete(roommateId);
+      state.statuses.delete(roommateId);
     },
   }));
-export const roommatePositions = RoommatePositions.create();
+export const roommateStatuses = RoommateStatuses.create();
 
 const Size = types
   .model({

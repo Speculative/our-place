@@ -7,7 +7,7 @@ import {
   DownstreamMessage,
 } from "./common";
 
-import { selfPosition, viewportMouse, roommatePositions, self } from "./store";
+import { selfPosition, viewportMouse, roommateStatuses, self } from "./store";
 import { initiatePeerConnection, receivePeerSignal, peerLeave } from "./rtc";
 
 let socket: WebSocket | undefined;
@@ -30,7 +30,7 @@ function handleMessage(event: MessageEvent<any>) {
     console.log(report.fromRoommateId, "joined");
     initiatePeerConnection(report.fromRoommateId);
 
-    roommatePositions.roommateMove(
+    roommateStatuses.roommateMove(
       report.fromRoommateId,
       report.x,
       report.y,
@@ -38,7 +38,7 @@ function handleMessage(event: MessageEvent<any>) {
       report.mouseY
     );
   } else if (report.type === "position") {
-    roommatePositions.roommateMove(
+    roommateStatuses.roommateMove(
       report.fromRoommateId,
       report.x,
       report.y,
@@ -47,7 +47,7 @@ function handleMessage(event: MessageEvent<any>) {
     );
   } else if (report.type === "leave") {
     console.log(report.fromRoommateId, "left");
-    roommatePositions.roommateLeave(report.fromRoommateId);
+    roommateStatuses.roommateLeave(report.fromRoommateId);
     peerLeave(report.fromRoommateId);
   } else if (report.type === "rtcOffer") {
     receivePeerSignal(report.fromRoommateId, report.offer);
