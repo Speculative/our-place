@@ -8,8 +8,6 @@ import {
   worldMouse,
   selfAudio,
   selfDress,
-  Hats,
-  Mouths,
 } from "./store";
 
 import { registerHotkeys } from "./hotkeys";
@@ -41,15 +39,15 @@ export const Room = observer(() => {
     >
       <Grid />
       {Array.from(roommateStatuses.statuses.entries()).map(
-        ([id, { pos, mouse, audio }]) => (
+        ([id, { pos, mouse, audio, dress }]) => (
           <Roommate
             x={pos.x}
             y={pos.y}
             mouseX={mouse.x}
             mouseY={mouse.y}
             loudness={audio.loudness}
-            mouth={Mouths.Fuji}
-            hat={Hats.Tangie}
+            mouth={dress.mouth}
+            hat={dress.hat}
             key={id}
           />
         )

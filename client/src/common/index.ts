@@ -48,11 +48,28 @@ export interface RTCOfferReport extends Report {
   offer: any;
 }
 
+export enum Hats {
+  Nothing = "Nothing",
+  Tangie = "Tangie",
+  Ears = "Ears",
+}
+export enum Mouths {
+  Circle = "Circle",
+  Fuji = "Fuji",
+}
+
+export interface DressReport extends Report {
+  type: "dress";
+  hat: Hats;
+  mouth: Mouths;
+}
+
 export type RoomReport =
   | JoinReport
   | PositionReport
   | LeaveReport
-  | RTCOfferReport;
+  | RTCOfferReport
+  | DressReport;
 export type UpstreamMessage = RoomReport | ClientSystemMessage;
 type UnionOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
 export type UpstreamMessageDetails = UnionOmit<

@@ -1,5 +1,6 @@
 import { observer } from "mobx-react-lite";
-import { Hats, Mouths, selfDress } from "./store";
+import { Hats, Mouths } from "./common";
+import { selfDress } from "./store";
 import { FPSCounter } from "./FPSCounter";
 
 import styles from "./HUD.module.css";

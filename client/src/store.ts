@@ -1,6 +1,8 @@
 import { types } from "mobx-state-tree";
 import { computed } from "mobx";
 
+import { Hats, Mouths } from "./common";
+
 const Self = types
   .model({
     selfId: types.maybe(types.string),
@@ -53,52 +55,82 @@ const AudioProperties = types
 
 export const selfAudio = AudioProperties.create();
 
+const Dress = types
+  .model({
+    hat: types.enumeration<Hats>(Object.values(Hats)),
+    mouth: types.enumeration<Mouths>(Object.values(Mouths)),
+  })
+  .actions((state) => ({
+    changeHat(hat: typeof state.hat) {
+      state.hat = hat;
+    },
+    changeMouth(mouth: typeof state.mouth) {
+      state.mouth = mouth;
+    },
+  }));
+export const selfDress = Dress.create({
+  hat: Hats.Nothing,
+  mouth: Mouths.Fuji,
+});
+
 const RoommateStatus = types.model({
   pos: Position,
   mouse: Position,
   audio: AudioProperties,
+  dress: Dress,
 });
 
 const RoommateStatuses = types
   .model({
     statuses: types.map(RoommateStatus),
   })
-  .actions((state) => ({
-    roommateMove(
-      roommateId: string,
-      x: number,
-      y: number,
-      mouseX: number,
-      mouseY: number
-    ) {
+  .actions((state) => {
+    function ensureExists(roommateId: string) {
       if (!state.statuses.has(roommateId)) {
         state.statuses.set(roommateId, {
           pos: Position.create(),
           mouse: Position.create(),
           audio: AudioProperties.create(),
+          dress: Dress.create({
+            hat: Hats.Nothing,
+            mouth: Mouths.Circle,
+          }),
         });
       }
+    }
 
-      const roommateStatus = state.statuses.get(roommateId)!;
-      roommateStatus.pos.move(x, y);
-      roommateStatus.mouse.move(mouseX, mouseY);
-    },
-    roommateSpeak(roommateId: string, loudness: number) {
-      if (!state.statuses.has(roommateId)) {
-        state.statuses.set(roommateId, {
-          pos: Position.create(),
-          mouse: Position.create(),
-          audio: AudioProperties.create(),
-        });
-      }
+    return {
+      roommateMove(
+        roommateId: string,
+        x: number,
+        y: number,
+        mouseX: number,
+        mouseY: number
+      ) {
+        ensureExists(roommateId);
 
-      const roommateStatus = state.statuses.get(roommateId)!;
-      roommateStatus.audio.setLoudness(loudness);
-    },
-    roommateLeave(roommateId: string) {
-      state.statuses.delete(roommateId);
-    },
-  }));
+        const roommateStatus = state.statuses.get(roommateId)!;
+        roommateStatus.pos.move(x, y);
+        roommateStatus.mouse.move(mouseX, mouseY);
+      },
+      roommateSpeak(roommateId: string, loudness: number) {
+        ensureExists(roommateId);
+
+        const roommateStatus = state.statuses.get(roommateId)!;
+        roommateStatus.audio.setLoudness(loudness);
+      },
+      roommateDress(roommateId: string, hat: Hats, mouth: Mouths) {
+        ensureExists(roommateId);
+
+        const roommateStatus = state.statuses.get(roommateId)!;
+        roommateStatus.dress.changeHat(hat);
+        roommateStatus.dress.changeMouth(mouth);
+      },
+      roommateLeave(roommateId: string) {
+        state.statuses.delete(roommateId);
+      },
+    };
+  });
 export const roommateStatuses = RoommateStatuses.create();
 
 const Size = types
@@ -154,32 +186,4 @@ export const worldMouse = computed(() => {
     mouseX: cameraMinX + viewportMouse.viewportX,
     mouseY: cameraMinY + viewportMouse.viewportY,
   };
-});
-
-export enum Hats {
-  Nothing = "Nothing",
-  Tangie = "Tangie",
-  Ears = "Ears",
-}
-export enum Mouths {
-  Circle = "Circle",
-  Fuji = "Fuji",
-}
-
-const Dress = types
-  .model({
-    hat: types.enumeration<Hats>(Object.values(Hats)),
-    mouth: types.enumeration<Mouths>(Object.values(Mouths)),
-  })
-  .actions((state) => ({
-    changeHat(hat: typeof state.hat) {
-      state.hat = hat;
-    },
-    changeMouth(mouth: typeof state.mouth) {
-      state.mouth = mouth;
-    },
-  }));
-export const selfDress = Dress.create({
-  hat: Hats.Nothing,
-  mouth: Mouths.Fuji,
 });

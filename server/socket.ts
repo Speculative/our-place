@@ -4,9 +4,11 @@ import type { WebSocket } from "https://deno.land/std@0.91.0/ws/mod.ts";
 // It's a bit weird to reach into the client folder for this, but CRA doesn't
 // like importing from outside of the client/src directory. Meanwhile, deno is
 // fine with it, and we don't need them anymore after compilation.
-import type {
+import {
   UpstreamMessage,
   DownstreamMessage,
+  Hats,
+  Mouths,
 } from "../client/src/common/index.ts";
 
 /*
@@ -21,6 +23,10 @@ const roommates: {
     heartbeatInterval: number;
     position: { x: number; y: number; mouseX: number; mouseY: number };
     alive: boolean;
+    dress: {
+      hat: Hats;
+      mouth: Mouths;
+    };
   };
 } = {};
 
@@ -54,6 +60,10 @@ function initializeRoommate(socket: WebSocket) {
     heartbeatInterval: setInterval(() => checkAlive(id), 5000),
     position: { x: 0, y: 0, mouseX: 0, mouseY: 0 },
     alive: false,
+    dress: {
+      hat: Hats.Nothing,
+      mouth: Mouths.Circle,
+    },
   };
 
   return id;
@@ -103,7 +113,11 @@ function handleMessage(message: string, roommateId: string) {
       if (parsed.type === "position" || parsed.type === "join") {
         const { x, y, mouseX, mouseY } = parsed;
         roommates[roommateId].position = { x, y, mouseX, mouseY };
+      } else if (parsed.type === "dress") {
+        const { hat, mouth } = parsed;
+        roommates[roommateId].dress = { hat, mouth };
       }
+
       broadcast(parsed, roommateId);
     }
   } catch (e) {
@@ -121,13 +135,18 @@ export async function configureSocket(socket: WebSocket) {
     // Send initial position reports to the one who just joined
     Object.entries(roommates)
       .filter(([roommateId]) => roommateId !== id)
-      .forEach(([roommateId, { position }]) =>
+      .forEach(([roommateId, { position, dress }]) => {
         safeSend(socket, {
           type: "position",
           fromRoommateId: roommateId,
           ...position,
-        })
-      );
+        });
+        safeSend(socket, {
+          type: "dress",
+          fromRoommateId: roommateId,
+          ...dress,
+        });
+      });
 
     // We're intentinoally awaiting here, blocking the request from closing
     for await (const event of socket) {

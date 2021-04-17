@@ -7,7 +7,13 @@ import {
   DownstreamMessage,
 } from "./common";
 
-import { selfPosition, viewportMouse, roommateStatuses, self } from "./store";
+import {
+  selfPosition,
+  viewportMouse,
+  roommateStatuses,
+  self,
+  selfDress,
+} from "./store";
 import { initiatePeerConnection, receivePeerSignal, peerLeave } from "./rtc";
 
 let socket: WebSocket | undefined;
@@ -51,6 +57,12 @@ function handleMessage(event: MessageEvent<any>) {
     peerLeave(report.fromRoommateId);
   } else if (report.type === "rtcOffer") {
     receivePeerSignal(report.fromRoommateId, report.offer);
+  } else if (report.type === "dress") {
+    roommateStatuses.roommateDress(
+      report.fromRoommateId,
+      report.hat,
+      report.mouth
+    );
   }
 }
 
@@ -71,6 +83,14 @@ export function setupSocket() {
       y: selfPosition.y,
       mouseX: viewportMouse.viewportX,
       mouseY: viewportMouse.viewportY,
+    });
+  });
+
+  autorun(() => {
+    safeSend({
+      type: "dress",
+      hat: selfDress.hat,
+      mouth: selfDress.mouth,
     });
   });
 }

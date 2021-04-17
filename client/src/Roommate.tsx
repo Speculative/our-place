@@ -1,5 +1,5 @@
 import { useSpring, animated } from "react-spring";
-import { Hats, Mouths } from "./store";
+import { Hats, Mouths } from "./common";
 
 interface RoommateProps {
   x: number;
