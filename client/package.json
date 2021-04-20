@@ -13,6 +13,7 @@
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.3",
     "@types/simple-peer": "^9.6.2",
+    "classnames": "^2.3.1",
     "mobx": "^6.2.0",
     "mobx-react-lite": "^3.2.0",
     "mobx-state-tree": "^5.0.1",
@@ -26,7 +27,7 @@
     "web-vitals": "^1.1.1"
   },
   "scripts": {
-    "start": "BROWSER=none react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "prepare": "cd .. && husky install client/.husky"

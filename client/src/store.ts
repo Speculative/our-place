@@ -146,7 +146,7 @@ const Size = types
   }));
 export const room = Size.create({
   width: 2000,
-  height: 2000,
+  height: 1040,
 });
 
 export const windowSize = Size.create({
@@ -155,18 +155,27 @@ export const windowSize = Size.create({
 });
 
 export const camera = computed(() => {
+  const cameraWidth = windowSize.width;
+  const cameraHeight = windowSize.height;
+  const viewportCenterX = cameraWidth / 2;
+  const viewportCenterY = cameraHeight / 2;
+
   const xOff = windowSize.width / 2;
   const yOff = windowSize.height / 2;
 
   const targetCameraX =
-    selfPosition.x - xOff < 0
+    cameraWidth > room.width
+      ? (room.width - cameraWidth) / 2 + xOff
+      : selfPosition.x - xOff < 0
       ? xOff
       : selfPosition.x + xOff > room.width
       ? room.width - xOff
       : selfPosition.x;
 
   const targetCameraY =
-    selfPosition.y - yOff < 0
+    cameraHeight > room.height
+      ? (room.height - cameraHeight) / 2 + yOff
+      : selfPosition.y - yOff < 0
       ? yOff
       : selfPosition.y + yOff > room.height
       ? room.height - yOff
